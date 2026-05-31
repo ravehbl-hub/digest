@@ -4,6 +4,7 @@ import { useFeed, initExternalProxy } from './useFeed';
 import { t } from './i18n';
 import NewsCard from './components/NewsCard';
 import SourcesModal from './components/SourcesModal';
+import Ticker from './components/Ticker';
 import './App.css';
 
 const STORAGE_KEYS = { lang: 'digest_lang', sources: 'digest_sources', version: 'digest_sources_v' };
@@ -139,6 +140,8 @@ export default function App() {
             </button>
           </div>
         </div>
+
+        <Ticker />
 
         <div className="search-bar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
