@@ -205,6 +205,19 @@ async function tryLocalProxy(feedUrl) {
   return parseXML(text);
 }
 
+// External Render proxy — URL set from App.jsx via initExternalProxy()
+let _proxyUrl = '';
+export function initExternalProxy(url) { _proxyUrl = url || ''; }
+
+async function tryExternalProxy(feedUrl) {
+  if (!_proxyUrl) throw new Error('No external proxy');
+  const res = await fetchWithTimeout(`${_proxyUrl}/rss?url=${encodeURIComponent(feedUrl)}`);
+  if (!res.ok) throw new Error(`external proxy ${res.status}`);
+  const text = await res.text();
+  if (!text.trim()) throw new Error('external proxy empty');
+  if (isTelegramUrl(feedUrl)) return parseTelegram(text);
+  return parseXML(text);
+}
 
 async function tryCorsproxy(feedUrl) {
   const res = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(feedUrl)}`);
@@ -248,7 +261,7 @@ async function fetchFeed(url) {
   const cached = cache.get(url);
   if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
 
-  for (const strategy of [tryLocalProxy, tryCorsproxy, tryAllOrigins, tryRss2Json]) {
+  for (const strategy of [tryLocalProxy, tryExternalProxy, tryCorsproxy, tryAllOrigins, tryRss2Json]) {
     try {
       const data = await strategy(url);
       cache.set(url, { ts: Date.now(), data });

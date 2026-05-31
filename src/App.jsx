@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { DEFAULT_SOURCES, CATEGORIES, SOURCES_VERSION } from './sources';
-import { useFeed } from './useFeed';
+import { useFeed, initExternalProxy } from './useFeed';
 import { t } from './i18n';
 import NewsCard from './components/NewsCard';
 import SourcesModal from './components/SourcesModal';
@@ -51,8 +51,15 @@ export default function App() {
   }, [sources, loadAll, clearCache]);
 
   useEffect(() => {
-    loadAll(sources);
-    setLastRefresh(new Date());
+    // Fetch Render proxy URL from /api/config, then load all feeds
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(d => initExternalProxy(d.proxyUrl))
+      .catch(() => {})
+      .finally(() => {
+        loadAll(sources);
+        setLastRefresh(new Date());
+      });
   }, []);
 
   const activeSources = useMemo(
