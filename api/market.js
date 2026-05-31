@@ -60,6 +60,13 @@ export default async function handler(req, res) {
   try {
     const raw = await fetchJson(url);
 
+    // Debug: return raw response when ?debug=1
+    if (new URL(req.url, 'https://x').searchParams.get('debug') === '1') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(raw, null, 2));
+      return;
+    }
+
     const data = SYMBOLS.map(({ key, label, currency }) => {
       const q = raw[key];
       if (!q || q.status === 'error' || !q.close) return null;
