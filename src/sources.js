@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 18;
+export const SOURCES_VERSION = 19;
 
 export const DEFAULT_SOURCES = [
   // NEWS
