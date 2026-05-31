@@ -1,7 +1,6 @@
 import { createServer } from 'http';
 import https from 'https';
 import http from 'http';
-import zlib from 'zlib';
 import { URL } from 'url';
 
 const PORT = process.env.PORT || 3001;
@@ -10,22 +9,9 @@ const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Accept': 'application/rss+xml,application/xml;q=0.9,text/html;q=0.8,*/*;q=0.5',
   'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
   'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none',
-  'Upgrade-Insecure-Requests': '1',
 };
 
-function decompress(upstream) {
-  const enc = upstream.headers['content-encoding'] || '';
-  if (enc.includes('br')) return upstream.pipe(zlib.createBrotliDecompress());
-  if (enc.includes('gzip')) return upstream.pipe(zlib.createGunzip());
-  if (enc.includes('deflate')) return upstream.pipe(zlib.createInflate());
-  return upstream;
-}
 
 function fetchUrl(targetUrl, redirectsLeft) {
   return new Promise((resolve, reject) => {
@@ -51,7 +37,7 @@ function fetchUrl(targetUrl, redirectsLeft) {
         fetchUrl(new URL(headers.location, targetUrl).href, redirectsLeft - 1).then(resolve).catch(reject);
         return;
       }
-      resolve({ statusCode, headers, stream: decompress(upstream) });
+      resolve({ statusCode, headers, stream: upstream });
     });
 
     req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });

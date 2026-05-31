@@ -1,28 +1,14 @@
 import https from 'https';
 import http from 'http';
-import zlib from 'zlib';
 import { URL } from 'url';
 
+// No Accept-Encoding — servers send plain text, no decompression needed
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Accept': 'application/rss+xml,application/xml;q=0.9,text/html;q=0.8,*/*;q=0.5',
   'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
   'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none',
-  'Upgrade-Insecure-Requests': '1',
 };
-
-function decompress(upstream) {
-  const enc = upstream.headers['content-encoding'] || '';
-  if (enc.includes('br')) return upstream.pipe(zlib.createBrotliDecompress());
-  if (enc.includes('gzip')) return upstream.pipe(zlib.createGunzip());
-  if (enc.includes('deflate')) return upstream.pipe(zlib.createInflate());
-  return upstream;
-}
 
 function fetchUrl(targetUrl, redirectsLeft, timeoutMs) {
   return new Promise((resolve, reject) => {
@@ -39,7 +25,6 @@ function fetchUrl(targetUrl, redirectsLeft, timeoutMs) {
         ...HEADERS,
         'Host': target.hostname,
         'Referer': `${target.protocol}//${target.hostname}/`,
-        'Origin': `${target.protocol}//${target.hostname}`,
       },
     }, (upstream) => {
       const { statusCode, headers } = upstream;
@@ -49,7 +34,7 @@ function fetchUrl(targetUrl, redirectsLeft, timeoutMs) {
           .then(resolve).catch(reject);
         return;
       }
-      resolve({ statusCode, headers, stream: decompress(upstream) });
+      resolve({ statusCode, headers, stream: upstream });
     });
 
     req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
@@ -68,11 +53,9 @@ export default async function handler(req, res) {
 
   try {
     const { statusCode, headers, stream } = await fetchUrl(targetUrl, 5, 12000);
-    const ct = (headers['content-type'] || 'application/xml; charset=utf-8')
-      .replace(/;\s*charset=[^;]*/i, '; charset=utf-8');
+    const ct = headers['content-type'] || 'text/plain; charset=utf-8';
     res.writeHead(statusCode, { 'Content-Type': ct });
     stream.pipe(res);
-    stream.on('error', (e) => { if (!res.headersSent) res.end(); });
   } catch (e) {
     if (!res.headersSent) { res.writeHead(502); res.end(e.message); }
   }
