@@ -25,11 +25,11 @@ const SYMBOLS = [
   { symbol: 'SEDG',       label: 'SolarEdge' },
 ];
 
-function fetchJson(url) {
+function fetchWithTimeout(url, ms) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json',
       },
     }, (res) => {
@@ -37,21 +37,31 @@ function fetchJson(url) {
       res.on('data', c => body += c);
       res.on('end', () => { try { resolve(JSON.parse(body)); } catch { reject(new Error('JSON')); } });
     });
-    req.setTimeout(9000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(ms, () => { req.destroy(); reject(new Error('Timeout')); });
     req.on('error', reject);
   });
+}
+
+// Wrap each quote with its own timeout so slow ones don't block others
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(null), ms)),
+  ]);
 }
 
 async function getQuote({ symbol, label, currency }) {
   try {
     const enc = encodeURIComponent(symbol);
-    const d = await fetchJson(`https://query2.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=2d`);
+    const d = await fetchWithTimeout(
+      `https://query2.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=2d`,
+      4500,
+    );
     const meta = d?.chart?.result?.[0]?.meta;
     if (!meta?.regularMarketPrice) return null;
     const price = meta.regularMarketPrice;
-    const prev = meta.chartPreviousClose || meta.previousClose || price;
-    const pct = ((price - prev) / prev) * 100;
-    return { symbol, label, price, pct, currency: currency || false };
+    const prev = meta.chartPreviousClose || price;
+    return { symbol, label, price, pct: ((price - prev) / prev) * 100, currency: !!currency };
   } catch { return null; }
 }
 
@@ -59,8 +69,11 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
-  const results = await Promise.allSettled(SYMBOLS.map(getQuote));
-  const data = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+  // Each quote times out at 4.5s; overall deadline 8s (Vercel limit is 10s)
+  const results = await Promise.all(
+    SYMBOLS.map(s => withTimeout(getQuote(s), 4500))
+  );
+  const data = results.filter(Boolean);
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ data, ts: Date.now() }));
