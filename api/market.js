@@ -23,7 +23,7 @@ const TASE = [
   { s: 'SKBN.TA',  label: 'שיכון ובינוי' },
   { s: 'ASHG.TA',  label: 'אשטרום' },
   { s: 'ISCN.TA',  label: 'ישראל קנדה' },
-  { s: 'SPEN.TA',   label: 'שפיר' },
+  { s: 'SPEN.TA',   label: 'שפיר הנדסה' },
   { s: 'AZRG.TA',   label: 'עזריאלי' },
   { s: 'GVYM.TA',   label: 'גב ים' },
   { s: 'AMOT.TA',   label: 'אמות' },
