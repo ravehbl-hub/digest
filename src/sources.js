@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 21;
+export const SOURCES_VERSION = 22;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -25,7 +25,7 @@ export const DEFAULT_SOURCES = [
   { id: 'internetisrael',    name: 'Internet Israel',         nameHe: 'אינטרנט ישראל',           url: 'https://internet-israel.com/feed/',                                             category: 'tech',    active: true },
 
   // SCIENCE
-  { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://www.hayadan.org.il/feed/',                                               category: 'science', active: true },
+  { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://t.me/s/hayadan1',                                                      category: 'science', active: true },
   { id: 'davidson',          name: 'Davidson Institute',      nameHe: 'מגזין מכון דוידסון',      url: 'https://davidson.org.il/?feed=rss2',                                            category: 'science', active: false },
 
   // AUTO

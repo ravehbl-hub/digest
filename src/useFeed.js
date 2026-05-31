@@ -195,14 +195,19 @@ async function fetchWithTimeout(url, ms = 12000) {
 
 // --- Proxy strategies ---
 
+function requireItems(data) {
+  if (!data.items || data.items.length === 0) throw new Error('empty feed');
+  return data;
+}
+
 // Vercel serverless function / Vite dev middleware
 async function tryLocalProxy(feedUrl) {
   const res = await fetchWithTimeout(`/api/rss?url=${encodeURIComponent(feedUrl)}`);
   if (!res.ok) throw new Error(`local proxy ${res.status}`);
   const text = await res.text();
   if (!text.trim()) throw new Error('local proxy empty');
-  if (isTelegramUrl(feedUrl)) return parseTelegram(text);
-  return parseXML(text);
+  if (isTelegramUrl(feedUrl)) return requireItems(parseTelegram(text));
+  return requireItems(parseXML(text));
 }
 
 // External Render proxy — URL set from App.jsx via initExternalProxy()
@@ -216,8 +221,8 @@ async function tryExternalProxy(feedUrl) {
   if (!res.ok) throw new Error(`external proxy ${res.status}`);
   const text = await res.text();
   if (!text.trim()) throw new Error('external proxy empty');
-  if (isTelegramUrl(feedUrl)) return parseTelegram(text);
-  return parseXML(text);
+  if (isTelegramUrl(feedUrl)) return requireItems(parseTelegram(text));
+  return requireItems(parseXML(text));
 }
 
 async function tryCorsproxy(feedUrl) {
