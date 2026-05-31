@@ -122,14 +122,31 @@ function parseTelegram(html) {
     const permalink = dateLink?.href || (postId ? `https://t.me/${postId}` : '');
     const datetime = wrap.querySelector('time')?.getAttribute('datetime');
 
-    const previewLink = wrap.querySelector('a.tgme_widget_message_link_preview');
-    const articleLink = previewLink?.href || permalink;
-
-    // Title: link_preview_title → first bold line of message text → fallback
-    const previewTitle = wrap.querySelector('.link_preview_title')?.textContent?.trim();
     const msgText = wrap.querySelector('.tgme_widget_message_text');
+
+    // Find article link:
+    // 1. link_preview card (image/card preview)
+    // 2. First external <a> link inside message text (e.g. "קישור לכתבה", highlighted title)
+    const previewLink = wrap.querySelector('a.tgme_widget_message_link_preview');
+    const inlineLinks = Array.from(
+      (msgText || wrap).querySelectorAll('a[href]')
+    ).filter(a => {
+      const href = a.getAttribute('href') || '';
+      return href.startsWith('http') &&
+        !href.includes('t.me/') &&
+        !href.includes('telegram.org') &&
+        !href.includes('t.co/');
+    });
+    const inlineArticleLink = inlineLinks[0]?.getAttribute('href') || null;
+    const articleLink = previewLink?.href || inlineArticleLink || null;
+
+    // Title: link_preview_title → inline link text (e.g. highlighted article title) → first bold → message text
+    const previewTitle = wrap.querySelector('.link_preview_title')?.textContent?.trim();
+    const inlineLinkText = inlineLinks[0]?.textContent?.trim();
     const firstBold = msgText?.querySelector('b')?.textContent?.trim();
-    const title = previewTitle || firstBold ||
+    const title = previewTitle ||
+      (inlineLinkText && inlineLinkText.length > 5 ? inlineLinkText : null) ||
+      firstBold ||
       stripHtml(msgText?.innerHTML || '').slice(0, 80) || 'הודעה';
 
     // Description: link_preview_description → message text
