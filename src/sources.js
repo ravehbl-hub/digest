@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 23;
+export const SOURCES_VERSION = 24;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -13,7 +13,6 @@ export const DEFAULT_SOURCES = [
 
   // FINANCE — Calcalist
   { id: 'calcalist-tg',      name: 'Calcalist (Telegram)',     nameHe: 'כלכליסט (טלגרם)',         url: 'https://t.me/s/calcalist',                                                     category: 'finance', active: true },
-  { id: 'ecoilchannel',      name: 'Economy Channel',         nameHe: 'ערוץ הכלכלה',             url: 'https://www.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',       category: 'finance', active: true },
 
   // TECH
   { id: 'geektime',          name: 'Geektime',                nameHe: 'גיקטיים',                 url: 'https://t.me/s/geektimecoil',                                                  category: 'tech',    active: true },
