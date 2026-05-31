@@ -66,7 +66,7 @@ export default function Ticker() {
   ]).filter(Boolean);
 
   return (
-    <div className="ticker-wrap">
+    <div className="ticker-wrap" dir="ltr">
       <div className="ticker-track">
         <span className="ticker-content">{nodes}</span>
         <span className="ticker-content" aria-hidden="true">{nodes}</span>
