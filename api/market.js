@@ -85,7 +85,7 @@ export default async function handler(req, res) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Content-Type': 'application/json',
-    'Cache-Control': isDebug ? 'no-store' : 'public, s-maxage=3600',
+    'Cache-Control': 'no-store',
   };
 
   res.writeHead(200, headers);
