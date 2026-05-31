@@ -1,16 +1,16 @@
-export const SOURCES_VERSION = 9;
+export const SOURCES_VERSION = 10;
 
 export const DEFAULT_SOURCES = [
   // NEWS
   { id: 'ynet',              name: 'Ynet',                    nameHe: 'ynet',                    url: 'https://www.ynet.co.il/Integration/StoryRss2.xml',                              category: 'news',    active: true },
-  { id: 'israelhayom',       name: 'Israel Hayom',            nameHe: 'ישראל היום',              url: 'https://www.israelhayom.co.il/rss.xml',                                         category: 'news',    active: true },
+  { id: 'israelhayom',       name: 'Israel Hayom',            nameHe: 'ישראל היום',              url: 'https://t.me/s/israelhayomnews',                                                category: 'news',    active: true },
 
   // FINANCE — Globes
   { id: 'globes',            name: 'Globes',                  nameHe: 'גלובס',                   url: 'https://t.me/s/globesnews',                                                      category: 'finance', active: true },
 
   // FINANCE — TheMarker
   { id: 'themarker',         name: 'TheMarker',               nameHe: 'דה מרקר',                 url: 'https://www.themarker.com/srv/tm-news',                                         category: 'finance', active: true },
-  { id: 'themarker-x',       name: 'TheMarker (X)',           nameHe: 'דה מרקר (X)',              url: 'https://nitter.net/themarker/rss',                                              category: 'finance', active: true },
+  { id: 'themarker-x',       name: 'TheMarker (X)',           nameHe: 'דה מרקר (X)',              url: 'https://nitter.net/themarker/rss',                                              category: 'finance', active: false },
 
   // FINANCE — Calcalist
   { id: 'calcalist-tg',      name: 'Calcalist (Telegram)',     nameHe: 'כלכליסט (טלגרם)',         url: 'https://t.me/s/calcalist',                                                     category: 'finance', active: true },
@@ -34,7 +34,7 @@ export const DEFAULT_SOURCES = [
   { id: 'auto',              name: 'Auto',                    nameHe: 'אוטו',                    url: 'https://www.auto.co.il/?feed=rss2',                                             category: 'auto',    active: true },
   { id: 'cartube',           name: 'CarTube',                 nameHe: 'קארטיוב',                 url: 'https://www.cartube.co.il/?format=feed&type=rss',                               category: 'auto',    active: true },
   { id: 'thecar',            name: 'The Car',                 nameHe: 'The Car',                 url: 'https://thecar.co.il/feed/',                                                    category: 'auto',    active: true },
-  { id: 'wheel',             name: 'Wheel',                   nameHe: 'גלגל',                    url: 'https://www.wheel.co.il/feed/',                                                 category: 'auto',    active: true },
+  { id: 'wheel',             name: 'Wheel',                   nameHe: 'גלגל',                    url: 'https://t.me/s/wheel_news',                                                    category: 'auto',    active: true },
 
   // DEFENSE
   { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://www.israeldefense.co.il/rss.xml',                                      category: 'defense', active: true },
