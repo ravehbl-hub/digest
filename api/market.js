@@ -1,6 +1,5 @@
 import https from 'https';
 
-// Stooq — US stocks & FX (always available, no key, fast)
 const STOOQ = [
   { s: 'usdils',   label: 'דולר/ש"ח', currency: true },
   { s: 'eurils',   label: 'יורו/ש"ח', currency: true },
@@ -16,19 +15,20 @@ const STOOQ = [
   { s: 'sedg.us',  label: 'SolarEdge' },
 ];
 
-// Yahoo Finance v8 — TASE stocks (returns last known price even when market closed)
 const TASE = [
-  { s: 'TA35.TA',  label: 'ת"א 35' },
+  { s: 'TA35.TA',   label: 'ת"א 35' },
   { s: '^TA125.TA', label: 'ת"א 125' },
-  { s: 'SKBN.TA',  label: 'שיכון ובינוי' },
-  { s: 'ASHG.TA',  label: 'אשטרום' },
-  { s: 'ISCN.TA',  label: 'ישראל קנדה' },
+  { s: 'SKBN.TA',   label: 'שיכון ובינוי' },
+  { s: 'ASHG.TA',   label: 'אשטרום' },
+  { s: 'ISCN.TA',   label: 'ישראל קנדה' },
   { s: 'SPEN.TA',   label: 'שפיר הנדסה' },
   { s: 'AZRG.TA',   label: 'עזריאלי' },
   { s: 'GVYM.TA',   label: 'גב ים' },
   { s: 'AMOT.TA',   label: 'אמות' },
   { s: 'ESLT.TA',   label: 'אלביט מערכות' },
 ];
+
+const ALL = [...STOOQ, ...TASE];
 
 function get(url, ms = 6000) {
   return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ async function stooqQuote({ s, label, currency }) {
     const close = parseFloat(p[6]), open = parseFloat(p[3]);
     if (isNaN(close) || isNaN(open) || open === 0) return null;
     return { label, price: close, pct: ((close - open) / open) * 100, currency: !!currency };
-  } catch { return null; }
+  } catch (e) { return null; }
 }
 
 async function taseQuote({ s, label }) {
@@ -68,20 +68,32 @@ async function taseQuote({ s, label }) {
     const price = meta.regularMarketPrice;
     const prev = meta.chartPreviousClose || price;
     return { label, price, pct: ((price - prev) / prev) * 100, currency: false };
-  } catch { return null; }
+  } catch (e) { return null; }
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, s-maxage=3600');
+  const isDebug = new URL(req.url, 'https://x').searchParams.get('debug') === '1';
 
   const [stooqResults, taseResults] = await Promise.all([
     Promise.all(STOOQ.map(stooqQuote)),
     Promise.all(TASE.map(taseQuote)),
   ]);
 
-  const data = [...stooqResults, ...taseResults].filter(Boolean);
+  const all = [...stooqResults, ...taseResults];
+  const data = all.filter(Boolean);
 
-res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ data, ts: Date.now() }));
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json',
+    'Cache-Control': isDebug ? 'no-store' : 'public, s-maxage=3600',
+  };
+
+  res.writeHead(200, headers);
+
+  if (isDebug) {
+    const debug = ALL.map((sym, i) => ({ sym: sym.s, label: sym.label, result: all[i] }));
+    res.end(JSON.stringify({ debug, count: data.length, ts: Date.now() }, null, 2));
+  } else {
+    res.end(JSON.stringify({ data, ts: Date.now() }));
+  }
 }
