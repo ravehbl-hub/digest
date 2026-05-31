@@ -22,6 +22,7 @@ const TASE = [
   { s: '^TA125.TA', label: 'ת"א 125' },
   { s: 'SKBN.TA',  label: 'שיכון ובינוי' },
   { s: 'ASHG.TA',  label: 'אשטרום' },
+  { s: 'ISCN.TA',  label: 'ישראל קנדה' },
   { s: 'SPEN.TA',   label: 'שפיר' },
   { s: 'AZRG.TA',   label: 'עזריאלי' },
   { s: 'GVYM.TA',   label: 'גב ים' },
