@@ -68,6 +68,46 @@ function rssProxyPlugin() {
         }
       })
 
+      // Market data proxy — Yahoo Finance batch quote
+      server.middlewares.use('/api/market', async (req, res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        const LABELS = {
+          'USDILS=X': { label: 'דולר/ש"ח', currency: true }, 'EURILS=X': { label: 'יורו/ש"ח', currency: true },
+          '^TA35.TA': { label: 'ת"א 35' }, '^TA125.TA': { label: 'ת"א 125' },
+          'SKBN.TA': { label: 'שיכון ובינוי' }, 'ASHG.TA': { label: 'אשטרום' },
+          'CANA.TA': { label: 'קנדה ישראל' }, 'SPEN.TA': { label: 'שפיר' },
+          'AZRG.TA': { label: 'עזריאלי' }, 'GVYM.TA': { label: 'גב ים' },
+          'AMOT.TA': { label: 'אמות' }, 'ESLT.TA': { label: 'אלביט מערכות' },
+          '^GSPC': { label: 'S&P 500' }, '^IXIC': { label: 'נאסד"ק' },
+          'GOOGL': { label: 'Google' }, 'AMZN': { label: 'Amazon' },
+          'META': { label: 'Meta' }, 'NVDA': { label: 'Nvidia' },
+          'INTC': { label: 'Intel' }, 'MSFT': { label: 'Microsoft' },
+          'WIX': { label: 'Wix' }, 'SEDG': { label: 'SolarEdge' },
+        }
+        const symbols = Object.keys(LABELS).join(',')
+        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`
+        try {
+          const upstream = await fetchUrl(url, 1, 10000)
+          let body = ''
+          upstream.on('data', c => body += c)
+          upstream.on('end', () => {
+            try {
+              const d = JSON.parse(body)
+              const quotes = d?.quoteResponse?.result || []
+              const data = quotes.map(q => {
+                const m = LABELS[q.symbol]
+                if (!m || !q.regularMarketPrice) return null
+                return { symbol: q.symbol, label: m.label, price: q.regularMarketPrice, pct: q.regularMarketChangePercent || 0, currency: m.currency || false }
+              }).filter(Boolean)
+              res.writeHead(200, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ data, ts: Date.now() }))
+            } catch { res.writeHead(500); res.end('{}') }
+          })
+        } catch (e) {
+          if (!res.headersSent) { res.writeHead(502); res.end(e.message) }
+        }
+      })
+
       server.middlewares.use('/api/rss', async (req, res) => {
         res.setHeader('Access-Control-Allow-Origin', '*')
         res.setHeader('Access-Control-Allow-Methods', 'GET')

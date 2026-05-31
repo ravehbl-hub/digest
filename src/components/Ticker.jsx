@@ -5,7 +5,7 @@ function fmt(n, decimals = 2) {
 }
 
 function TickerItem({ item }) {
-  const isCurrency = item.symbol?.endsWith('=X');
+  const isCurrency = item.currency;
   const up = item.pct >= 0;
   return (
     <span className="ticker-item">
