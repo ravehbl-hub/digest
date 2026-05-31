@@ -80,9 +80,9 @@ function rssProxyPlugin() {
           { s: 'wix.us', label: 'Wix' }, { s: 'sedg.us', label: 'SolarEdge' },
         ]
         const TASE = [
-          { s: '^TA35.TA', label: 'ת"א 35' }, { s: '^TA125.TA', label: 'ת"א 125' },
+          { s: 'TA35.TA', label: 'ת"א 35' }, { s: '^TA125.TA', label: 'ת"א 125' },
           { s: 'SKBN.TA', label: 'שיכון ובינוי' }, { s: 'ASHG.TA', label: 'אשטרום' },
-          { s: 'CANA.TA', label: 'קנדה ישראל' }, { s: 'SPEN.TA', label: 'שפיר' },
+          { s: 'SPEN.TA', label: 'שפיר' },
           { s: 'AZRG.TA', label: 'עזריאלי' }, { s: 'GVYM.TA', label: 'גב ים' },
           { s: 'AMOT.TA', label: 'אמות' }, { s: 'ESLT.TA', label: 'אלביט מערכות' },
         ]

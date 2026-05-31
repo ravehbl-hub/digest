@@ -18,10 +18,10 @@ const STOOQ = [
 
 // Yahoo Finance v8 — TASE stocks (returns last known price even when market closed)
 const TASE = [
-  { s: 'TA35.TA',   label: 'ת"א 35' },
+  { s: 'TA35.TA',  label: 'ת"א 35' },
   { s: '^TA125.TA', label: 'ת"א 125' },
-  { s: 'SKBN.TA',   label: 'שיכון ובינוי' },
-  { s: 'ASHG.TA',   label: 'אשטרום' },
+  { s: 'SKBN.TA',  label: 'שיכון ובינוי' },
+  { s: 'ASHG.TA',  label: 'אשטרום' },
   { s: 'SPEN.TA',   label: 'שפיר' },
   { s: 'AZRG.TA',   label: 'עזריאלי' },
   { s: 'GVYM.TA',   label: 'גב ים' },
