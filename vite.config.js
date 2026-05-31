@@ -68,40 +68,50 @@ function rssProxyPlugin() {
         }
       })
 
-      // Market data via Stooq (free, no key, fast)
+      // Market data: Stooq for US/FX, Yahoo Finance v8 for TASE
       server.middlewares.use('/api/market', async (req, res) => {
         res.setHeader('Access-Control-Allow-Origin', '*')
-        const SYMS = [
-          { s: 'usdils', label: 'דולר/ש"ח', currency: true },
-          { s: 'eurils', label: 'יורו/ש"ח', currency: true },
+        const STOOQ = [
+          { s: 'usdils', label: 'דולר/ש"ח', currency: true }, { s: 'eurils', label: 'יורו/ש"ח', currency: true },
           { s: '^spx', label: 'S&P 500' }, { s: '^ndq', label: 'נאסד"ק' },
-          { s: 'ta35.tl', label: 'ת"א 35' }, { s: 'ta125.tl', label: 'ת"א 125' },
           { s: 'msft.us', label: 'Microsoft' }, { s: 'googl.us', label: 'Google' },
           { s: 'amzn.us', label: 'Amazon' }, { s: 'meta.us', label: 'Meta' },
           { s: 'nvda.us', label: 'Nvidia' }, { s: 'intc.us', label: 'Intel' },
           { s: 'wix.us', label: 'Wix' }, { s: 'sedg.us', label: 'SolarEdge' },
-          { s: 'skbn.il', label: 'שיכון ובינוי' }, { s: 'ashg.il', label: 'אשטרום' },
-          { s: 'cana.il', label: 'קנדה ישראל' }, { s: 'spen.il', label: 'שפיר' },
-          { s: 'azrg.il', label: 'עזריאלי' }, { s: 'gvym.il', label: 'גב ים' },
-          { s: 'amot.il', label: 'אמות' }, { s: 'eslt.il', label: 'אלביט מערכות' },
         ]
+        const TASE = [
+          { s: '^TA35.TA', label: 'ת"א 35' }, { s: '^TA125.TA', label: 'ת"א 125' },
+          { s: 'SKBN.TA', label: 'שיכון ובינוי' }, { s: 'ASHG.TA', label: 'אשטרום' },
+          { s: 'CANA.TA', label: 'קנדה ישראל' }, { s: 'SPEN.TA', label: 'שפיר' },
+          { s: 'AZRG.TA', label: 'עזריאלי' }, { s: 'GVYM.TA', label: 'גב ים' },
+          { s: 'AMOT.TA', label: 'אמות' }, { s: 'ESLT.TA', label: 'אלביט מערכות' },
+        ]
+        const readBody = upstream => new Promise(r => { let b = ''; upstream.on('data', c => b += c); upstream.on('end', () => r(b)); })
         const parseCsv = csv => {
-          const lines = csv.trim().split('\n'); if (lines.length < 2) return null
-          const p = lines[1].split(','); if (p.length < 7 || p[1] === 'N/D' || p[6] === 'N/D') return null
+          const p = csv.trim().split('\n')[1]?.split(',')
+          if (!p || p.length < 7 || p[1] === 'N/D') return null
           const close = parseFloat(p[6]), open = parseFloat(p[3])
-          if (isNaN(close) || isNaN(open) || open === 0) return null
-          return { close, pct: ((close - open) / open) * 100 }
+          return (!isNaN(close) && open > 0) ? { price: close, pct: ((close - open) / open) * 100 } : null
         }
-        const getQ = async ({ s, label, currency }) => {
+        const stooqQ = async ({ s, label, currency }) => {
           try {
-            const upstream = await fetchUrl(`https://stooq.com/q/l/?s=${encodeURIComponent(s)}&f=sd2t2ohlcv&h&e=csv`, 0, 5000)
-            let body = ''; await new Promise(r => { upstream.on('data', c => body += c); upstream.on('end', r) })
-            const d = parseCsv(body); if (!d) return null
-            return { symbol: s, label, price: d.close, pct: d.pct, currency: !!currency }
+            const u = await fetchUrl(`https://stooq.com/q/l/?s=${encodeURIComponent(s)}&f=sd2t2ohlcv&h&e=csv`, 0, 5000)
+            const d = parseCsv(await readBody(u)); if (!d) return null
+            return { label, price: d.price, pct: d.pct, currency: !!currency }
           } catch { return null }
         }
-        const results = await Promise.all(SYMS.map(getQ))
-        const data = results.filter(Boolean)
+        const taseQ = async ({ s, label }) => {
+          try {
+            const u = await fetchUrl(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=2d`, 1, 6000)
+            const body = await readBody(u)
+            const meta = JSON.parse(body)?.chart?.result?.[0]?.meta
+            if (!meta?.regularMarketPrice) return null
+            const price = meta.regularMarketPrice, prev = meta.chartPreviousClose || price
+            return { label, price, pct: ((price - prev) / prev) * 100, currency: false }
+          } catch { return null }
+        }
+        const [sr, tr] = await Promise.all([Promise.all(STOOQ.map(stooqQ)), Promise.all(TASE.map(taseQ))])
+        const data = [...sr, ...tr].filter(Boolean)
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ data, ts: Date.now() }))
       })
