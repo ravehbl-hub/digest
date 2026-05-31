@@ -68,44 +68,39 @@ function rssProxyPlugin() {
         }
       })
 
-      // Market data proxy — Yahoo Finance batch quote
+      // Market data — calls Yahoo Finance v8 per symbol in parallel
       server.middlewares.use('/api/market', async (req, res) => {
         res.setHeader('Access-Control-Allow-Origin', '*')
-        const LABELS = {
-          'USDILS=X': { label: 'דולר/ש"ח', currency: true }, 'EURILS=X': { label: 'יורו/ש"ח', currency: true },
-          '^TA35.TA': { label: 'ת"א 35' }, '^TA125.TA': { label: 'ת"א 125' },
-          'SKBN.TA': { label: 'שיכון ובינוי' }, 'ASHG.TA': { label: 'אשטרום' },
-          'CANA.TA': { label: 'קנדה ישראל' }, 'SPEN.TA': { label: 'שפיר' },
-          'AZRG.TA': { label: 'עזריאלי' }, 'GVYM.TA': { label: 'גב ים' },
-          'AMOT.TA': { label: 'אמות' }, 'ESLT.TA': { label: 'אלביט מערכות' },
-          '^GSPC': { label: 'S&P 500' }, '^IXIC': { label: 'נאסד"ק' },
-          'GOOGL': { label: 'Google' }, 'AMZN': { label: 'Amazon' },
-          'META': { label: 'Meta' }, 'NVDA': { label: 'Nvidia' },
-          'INTC': { label: 'Intel' }, 'MSFT': { label: 'Microsoft' },
-          'WIX': { label: 'Wix' }, 'SEDG': { label: 'SolarEdge' },
+        const SYMS = [
+          { symbol: 'USDILS=X', label: 'דולר/ש"ח', currency: true },
+          { symbol: 'EURILS=X', label: 'יורו/ש"ח', currency: true },
+          { symbol: '^TA35.TA', label: 'ת"א 35' }, { symbol: '^TA125.TA', label: 'ת"א 125' },
+          { symbol: 'SKBN.TA', label: 'שיכון ובינוי' }, { symbol: 'ASHG.TA', label: 'אשטרום' },
+          { symbol: 'CANA.TA', label: 'קנדה ישראל' }, { symbol: 'SPEN.TA', label: 'שפיר' },
+          { symbol: 'AZRG.TA', label: 'עזריאלי' }, { symbol: 'GVYM.TA', label: 'גב ים' },
+          { symbol: 'AMOT.TA', label: 'אמות' }, { symbol: 'ESLT.TA', label: 'אלביט מערכות' },
+          { symbol: '^GSPC', label: 'S&P 500' }, { symbol: '^IXIC', label: 'נאסד"ק' },
+          { symbol: 'GOOGL', label: 'Google' }, { symbol: 'AMZN', label: 'Amazon' },
+          { symbol: 'META', label: 'Meta' }, { symbol: 'NVDA', label: 'Nvidia' },
+          { symbol: 'INTC', label: 'Intel' }, { symbol: 'MSFT', label: 'Microsoft' },
+          { symbol: 'WIX', label: 'Wix' }, { symbol: 'SEDG', label: 'SolarEdge' },
+        ]
+        const getQ = async ({ symbol, label, currency }) => {
+          try {
+            const upstream = await fetchUrl(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`, 1, 9000)
+            let body = ''
+            await new Promise(r => { upstream.on('data', c => body += c); upstream.on('end', r) })
+            const meta = JSON.parse(body)?.chart?.result?.[0]?.meta
+            if (!meta?.regularMarketPrice) return null
+            const price = meta.regularMarketPrice
+            const prev = meta.chartPreviousClose || price
+            return { symbol, label, price, pct: ((price - prev) / prev) * 100, currency: !!currency }
+          } catch { return null }
         }
-        const symbols = Object.keys(LABELS).join(',')
-        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`
-        try {
-          const upstream = await fetchUrl(url, 1, 10000)
-          let body = ''
-          upstream.on('data', c => body += c)
-          upstream.on('end', () => {
-            try {
-              const d = JSON.parse(body)
-              const quotes = d?.quoteResponse?.result || []
-              const data = quotes.map(q => {
-                const m = LABELS[q.symbol]
-                if (!m || !q.regularMarketPrice) return null
-                return { symbol: q.symbol, label: m.label, price: q.regularMarketPrice, pct: q.regularMarketChangePercent || 0, currency: m.currency || false }
-              }).filter(Boolean)
-              res.writeHead(200, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ data, ts: Date.now() }))
-            } catch { res.writeHead(500); res.end('{}') }
-          })
-        } catch (e) {
-          if (!res.headersSent) { res.writeHead(502); res.end(e.message) }
-        }
+        const results = await Promise.allSettled(SYMS.map(getQ))
+        const data = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ data, ts: Date.now() }))
       })
 
       server.middlewares.use('/api/rss', async (req, res) => {
