@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 10;
+export const SOURCES_VERSION = 11;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -27,7 +27,7 @@ export const DEFAULT_SOURCES = [
   { id: 'internetisrael',    name: 'Internet Israel',         nameHe: 'אינטרנט ישראל',           url: 'https://internet-israel.com/feed/',                                             category: 'tech',    active: true },
 
   // SCIENCE
-  { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://www.hayadan.org.il/feed/',                                               category: 'science', active: true },
+  { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://t.me/s/hayadan1',                                                      category: 'science', active: true },
   { id: 'davidson',          name: 'Davidson Institute',      nameHe: 'מגזין מכון דוידסון',      url: 'https://davidson.org.il/?feed=rss2',                                            category: 'science', active: false },
 
   // AUTO
@@ -37,7 +37,7 @@ export const DEFAULT_SOURCES = [
   { id: 'wheel',             name: 'Wheel',                   nameHe: 'גלגל',                    url: 'https://t.me/s/wheel_news',                                                    category: 'auto',    active: true },
 
   // DEFENSE
-  { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://www.israeldefense.co.il/rss.xml',                                      category: 'defense', active: true },
+  { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://t.me/s/israeldefense_news',                                            category: 'defense', active: true },
 ];
 
 export const CATEGORIES = {
