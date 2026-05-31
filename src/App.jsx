@@ -51,10 +51,15 @@ export default function App() {
   }, [sources, loadAll, clearCache]);
 
   useEffect(() => {
-    // Fetch Render proxy URL from /api/config, then load all feeds
     fetch('/api/config')
       .then(r => r.json())
-      .then(d => initExternalProxy(d.proxyUrl))
+      .then(d => {
+        if (d.proxyUrl) {
+          initExternalProxy(d.proxyUrl);
+          // Wake up Render in background (handles cold start ~30s) without blocking source loading
+          fetch(`${d.proxyUrl}/health`).catch(() => {});
+        }
+      })
       .catch(() => {})
       .finally(() => {
         loadAll(sources);

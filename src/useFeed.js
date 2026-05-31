@@ -187,7 +187,7 @@ function parseTelegram(html) {
 
 // --- Timeout fetch ---
 
-function fetchWithTimeout(url, ms = 12000) {
+async function fetchWithTimeout(url, ms = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
@@ -211,7 +211,8 @@ export function initExternalProxy(url) { _proxyUrl = url || ''; }
 
 async function tryExternalProxy(feedUrl) {
   if (!_proxyUrl) throw new Error('No external proxy');
-  const res = await fetchWithTimeout(`${_proxyUrl}/rss?url=${encodeURIComponent(feedUrl)}`);
+  // 35s timeout — covers Render free tier cold start (~30s)
+  const res = await fetchWithTimeout(`${_proxyUrl}/rss?url=${encodeURIComponent(feedUrl)}`, 35000);
   if (!res.ok) throw new Error(`external proxy ${res.status}`);
   const text = await res.text();
   if (!text.trim()) throw new Error('external proxy empty');
