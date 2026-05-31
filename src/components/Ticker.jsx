@@ -29,7 +29,7 @@ export default function Ticker() {
   const [loading, setLoading] = useState(true);
 
   const load = () => {
-    fetch('/api/market')
+    fetch('/api/market?v=3')
       .then(r => r.json())
       .then(d => { setItems(d.data || []); setLoading(false); })
       .catch(() => setLoading(false));
