@@ -1,67 +1,64 @@
 import https from 'https';
 
+// Stooq symbols — free, no API key, fast
 const SYMBOLS = [
-  { symbol: 'USDILS=X',   label: 'דולר/ש"ח',       currency: true },
-  { symbol: 'EURILS=X',   label: 'יורו/ש"ח',        currency: true },
-  { symbol: '^TA35.TA',   label: 'ת"א 35' },
-  { symbol: '^TA125.TA',  label: 'ת"א 125' },
-  { symbol: 'SKBN.TA',    label: 'שיכון ובינוי' },
-  { symbol: 'ASHG.TA',    label: 'אשטרום' },
-  { symbol: 'CANA.TA',    label: 'קנדה ישראל' },
-  { symbol: 'SPEN.TA',    label: 'שפיר' },
-  { symbol: 'AZRG.TA',    label: 'עזריאלי' },
-  { symbol: 'GVYM.TA',    label: 'גב ים' },
-  { symbol: 'AMOT.TA',    label: 'אמות' },
-  { symbol: 'ESLT.TA',    label: 'אלביט מערכות' },
-  { symbol: '^GSPC',      label: 'S&P 500' },
-  { symbol: '^IXIC',      label: 'נאסד"ק' },
-  { symbol: 'GOOGL',      label: 'Google' },
-  { symbol: 'AMZN',       label: 'Amazon' },
-  { symbol: 'META',       label: 'Meta' },
-  { symbol: 'NVDA',       label: 'Nvidia' },
-  { symbol: 'INTC',       label: 'Intel' },
-  { symbol: 'MSFT',       label: 'Microsoft' },
-  { symbol: 'WIX',        label: 'Wix' },
-  { symbol: 'SEDG',       label: 'SolarEdge' },
+  { s: 'usdils',    label: 'דולר/ש"ח',       currency: true },
+  { s: 'eurils',    label: 'יורו/ש"ח',        currency: true },
+  { s: '^spx',      label: 'S&P 500' },
+  { s: '^ndq',      label: 'נאסד"ק' },
+  { s: 'ta35.tl',   label: 'ת"א 35' },
+  { s: 'ta125.tl',  label: 'ת"א 125' },
+  { s: 'msft.us',   label: 'Microsoft' },
+  { s: 'googl.us',  label: 'Google' },
+  { s: 'amzn.us',   label: 'Amazon' },
+  { s: 'meta.us',   label: 'Meta' },
+  { s: 'nvda.us',   label: 'Nvidia' },
+  { s: 'intc.us',   label: 'Intel' },
+  { s: 'wix.us',    label: 'Wix' },
+  { s: 'sedg.us',   label: 'SolarEdge' },
+  { s: 'skbn.il',   label: 'שיכון ובינוי' },
+  { s: 'ashg.il',   label: 'אשטרום' },
+  { s: 'cana.il',   label: 'קנדה ישראל' },
+  { s: 'spen.il',   label: 'שפיר' },
+  { s: 'azrg.il',   label: 'עזריאלי' },
+  { s: 'gvym.il',   label: 'גב ים' },
+  { s: 'amot.il',   label: 'אמות' },
+  { s: 'eslt.il',   label: 'אלביט מערכות' },
 ];
 
-function fetchWithTimeout(url, ms) {
+function fetchText(url) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-      },
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/csv,text/plain,*/*' },
     }, (res) => {
       let body = '';
       res.on('data', c => body += c);
-      res.on('end', () => { try { resolve(JSON.parse(body)); } catch { reject(new Error('JSON')); } });
+      res.on('end', () => resolve(body));
     });
-    req.setTimeout(ms, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(5000, () => { req.destroy(); reject(new Error('Timeout')); });
     req.on('error', reject);
   });
 }
 
-// Wrap each quote with its own timeout so slow ones don't block others
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise(resolve => setTimeout(() => resolve(null), ms)),
-  ]);
+// CSV: Symbol,Date,Time,Open,High,Low,Close,Volume
+function parseCsv(csv) {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return null;
+  const parts = lines[1].split(',');
+  if (parts.length < 7) return null;
+  if (parts[1] === 'N/D' || parts[6] === 'N/D') return null; // market closed
+  const close = parseFloat(parts[6]);
+  const open = parseFloat(parts[3]);
+  if (isNaN(close) || isNaN(open) || open === 0) return null;
+  return { close, pct: ((close - open) / open) * 100 };
 }
 
-async function getQuote({ symbol, label, currency }) {
+async function getQuote({ s, label, currency }) {
   try {
-    const enc = encodeURIComponent(symbol);
-    const d = await fetchWithTimeout(
-      `https://query2.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=2d`,
-      4500,
-    );
-    const meta = d?.chart?.result?.[0]?.meta;
-    if (!meta?.regularMarketPrice) return null;
-    const price = meta.regularMarketPrice;
-    const prev = meta.chartPreviousClose || price;
-    return { symbol, label, price, pct: ((price - prev) / prev) * 100, currency: !!currency };
+    const csv = await fetchText(`https://stooq.com/q/l/?s=${encodeURIComponent(s)}&f=sd2t2ohlcv&h&e=csv`);
+    const data = parseCsv(csv);
+    if (!data) return null;
+    return { symbol: s, label, price: data.close, pct: data.pct, currency: !!currency };
   } catch { return null; }
 }
 
@@ -69,10 +66,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
-  // Each quote times out at 4.5s; overall deadline 8s (Vercel limit is 10s)
-  const results = await Promise.all(
-    SYMBOLS.map(s => withTimeout(getQuote(s), 4500))
-  );
+  const results = await Promise.all(SYMBOLS.map(getQuote));
   const data = results.filter(Boolean);
 
   res.writeHead(200, { 'Content-Type': 'application/json' });

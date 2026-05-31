@@ -68,37 +68,40 @@ function rssProxyPlugin() {
         }
       })
 
-      // Market data — calls Yahoo Finance v8 per symbol in parallel
+      // Market data via Stooq (free, no key, fast)
       server.middlewares.use('/api/market', async (req, res) => {
         res.setHeader('Access-Control-Allow-Origin', '*')
         const SYMS = [
-          { symbol: 'USDILS=X', label: 'דולר/ש"ח', currency: true },
-          { symbol: 'EURILS=X', label: 'יורו/ש"ח', currency: true },
-          { symbol: '^TA35.TA', label: 'ת"א 35' }, { symbol: '^TA125.TA', label: 'ת"א 125' },
-          { symbol: 'SKBN.TA', label: 'שיכון ובינוי' }, { symbol: 'ASHG.TA', label: 'אשטרום' },
-          { symbol: 'CANA.TA', label: 'קנדה ישראל' }, { symbol: 'SPEN.TA', label: 'שפיר' },
-          { symbol: 'AZRG.TA', label: 'עזריאלי' }, { symbol: 'GVYM.TA', label: 'גב ים' },
-          { symbol: 'AMOT.TA', label: 'אמות' }, { symbol: 'ESLT.TA', label: 'אלביט מערכות' },
-          { symbol: '^GSPC', label: 'S&P 500' }, { symbol: '^IXIC', label: 'נאסד"ק' },
-          { symbol: 'GOOGL', label: 'Google' }, { symbol: 'AMZN', label: 'Amazon' },
-          { symbol: 'META', label: 'Meta' }, { symbol: 'NVDA', label: 'Nvidia' },
-          { symbol: 'INTC', label: 'Intel' }, { symbol: 'MSFT', label: 'Microsoft' },
-          { symbol: 'WIX', label: 'Wix' }, { symbol: 'SEDG', label: 'SolarEdge' },
+          { s: 'usdils', label: 'דולר/ש"ח', currency: true },
+          { s: 'eurils', label: 'יורו/ש"ח', currency: true },
+          { s: '^spx', label: 'S&P 500' }, { s: '^ndq', label: 'נאסד"ק' },
+          { s: 'ta35.tl', label: 'ת"א 35' }, { s: 'ta125.tl', label: 'ת"א 125' },
+          { s: 'msft.us', label: 'Microsoft' }, { s: 'googl.us', label: 'Google' },
+          { s: 'amzn.us', label: 'Amazon' }, { s: 'meta.us', label: 'Meta' },
+          { s: 'nvda.us', label: 'Nvidia' }, { s: 'intc.us', label: 'Intel' },
+          { s: 'wix.us', label: 'Wix' }, { s: 'sedg.us', label: 'SolarEdge' },
+          { s: 'skbn.il', label: 'שיכון ובינוי' }, { s: 'ashg.il', label: 'אשטרום' },
+          { s: 'cana.il', label: 'קנדה ישראל' }, { s: 'spen.il', label: 'שפיר' },
+          { s: 'azrg.il', label: 'עזריאלי' }, { s: 'gvym.il', label: 'גב ים' },
+          { s: 'amot.il', label: 'אמות' }, { s: 'eslt.il', label: 'אלביט מערכות' },
         ]
-        const getQ = async ({ symbol, label, currency }) => {
+        const parseCsv = csv => {
+          const lines = csv.trim().split('\n'); if (lines.length < 2) return null
+          const p = lines[1].split(','); if (p.length < 7 || p[1] === 'N/D' || p[6] === 'N/D') return null
+          const close = parseFloat(p[6]), open = parseFloat(p[3])
+          if (isNaN(close) || isNaN(open) || open === 0) return null
+          return { close, pct: ((close - open) / open) * 100 }
+        }
+        const getQ = async ({ s, label, currency }) => {
           try {
-            const upstream = await fetchUrl(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`, 1, 9000)
-            let body = ''
-            await new Promise(r => { upstream.on('data', c => body += c); upstream.on('end', r) })
-            const meta = JSON.parse(body)?.chart?.result?.[0]?.meta
-            if (!meta?.regularMarketPrice) return null
-            const price = meta.regularMarketPrice
-            const prev = meta.chartPreviousClose || price
-            return { symbol, label, price, pct: ((price - prev) / prev) * 100, currency: !!currency }
+            const upstream = await fetchUrl(`https://stooq.com/q/l/?s=${encodeURIComponent(s)}&f=sd2t2ohlcv&h&e=csv`, 0, 5000)
+            let body = ''; await new Promise(r => { upstream.on('data', c => body += c); upstream.on('end', r) })
+            const d = parseCsv(body); if (!d) return null
+            return { symbol: s, label, price: d.close, pct: d.pct, currency: !!currency }
           } catch { return null }
         }
-        const results = await Promise.allSettled(SYMS.map(getQ))
-        const data = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+        const results = await Promise.all(SYMS.map(getQ))
+        const data = results.filter(Boolean)
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ data, ts: Date.now() }))
       })
