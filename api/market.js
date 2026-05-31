@@ -18,11 +18,10 @@ const STOOQ = [
 
 // Yahoo Finance v8 — TASE stocks (returns last known price even when market closed)
 const TASE = [
-  { s: '^TA35.TA',  label: 'ת"א 35' },
+  { s: 'TA35.TA',   label: 'ת"א 35' },
   { s: '^TA125.TA', label: 'ת"א 125' },
   { s: 'SKBN.TA',   label: 'שיכון ובינוי' },
   { s: 'ASHG.TA',   label: 'אשטרום' },
-  { s: 'CANA.TA',   label: 'קנדה ישראל' },
   { s: 'SPEN.TA',   label: 'שפיר' },
   { s: 'AZRG.TA',   label: 'עזריאלי' },
   { s: 'GVYM.TA',   label: 'גב ים' },
@@ -82,17 +81,6 @@ export default async function handler(req, res) {
 
   const data = [...stooqResults, ...taseResults].filter(Boolean);
 
-  // Debug: ?debug=1 shows all results including nulls
-  if (new URL(req.url, 'https://x').searchParams.get('debug') === '1') {
-    const all = [
-      ...STOOQ.map((s, i) => ({ sym: s.s, result: stooqResults[i] })),
-      ...TASE.map((s, i) => ({ sym: s.s, result: taseResults[i] })),
-    ];
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ all, count: data.length, ts: Date.now() }, null, 2));
-    return;
-  }
-
-  res.writeHead(200, { 'Content-Type': 'application/json' });
+res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ data, ts: Date.now() }));
 }
