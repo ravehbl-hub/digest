@@ -40,15 +40,43 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
-  const results = await Promise.allSettled([
-    getStock('^TA35.TA', 'ת"א 35'),
-    getStock('^GSPC', 'S&P 500'),
-    getStock('^IXIC', 'נאסד"ק'),
-    getCurrency('USD', 'ILS', 'דולר'),
-    getCurrency('EUR', 'ILS', 'יורו'),
-  ]);
+  const symbols = [
+    // Currencies
+    () => getCurrency('USD', 'ILS', 'דולר'),
+    () => getCurrency('EUR', 'ILS', 'יורו'),
 
+    // Israeli indices
+    () => getStock('^TA35.TA',  'ת"א 35'),
+    () => getStock('^TA125.TA', 'ת"א 100'),
+
+    // Israeli stocks (TASE)
+    () => getStock('SKBN.TA', 'שיכון ובינוי'),
+    () => getStock('ASHG.TA', 'אשטרום'),
+    () => getStock('CANA.TA', 'קנדה ישראל'),
+    () => getStock('SPEN.TA', 'שפיר'),
+    () => getStock('AZRG.TA', 'עזריאלי'),
+    () => getStock('GVYM.TA', 'גב ים'),
+    () => getStock('AMOT.TA', 'אמות'),
+    () => getStock('ESLT.TA', 'אלביט מערכות'),
+
+    // Global indices
+    () => getStock('^GSPC',  'S&P 500'),
+    () => getStock('^IXIC',  'נאסד"ק'),
+
+    // US tech
+    () => getStock('GOOGL', 'Google'),
+    () => getStock('AMZN',  'Amazon'),
+    () => getStock('META',  'Meta'),
+    () => getStock('NVDA',  'Nvidia'),
+    () => getStock('INTC',  'Intel'),
+    () => getStock('MSFT',  'Microsoft'),
+    () => getStock('WIX',   'Wix'),
+    () => getStock('SEDG',  'SolarEdge'),
+  ];
+
+  const results = await Promise.allSettled(symbols.map(fn => fn()));
   const data = results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ data, ts: Date.now() }));
 }
