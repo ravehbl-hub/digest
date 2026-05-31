@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 13;
+export const SOURCES_VERSION = 14;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -34,7 +34,7 @@ export const DEFAULT_SOURCES = [
   { id: 'wheel',             name: 'Wheel',                   nameHe: 'גלגל',                    url: 'https://t.me/s/wheel_news',                                                    category: 'auto',    active: true },
 
   // DEFENSE
-  { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://nitter.net/_israeldefense/rss',                                        category: 'defense', active: true },
+  { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://www.israeldefense.co.il/rss.xml',                                      category: 'defense', active: true },
 ];
 
 export const CATEGORIES = {

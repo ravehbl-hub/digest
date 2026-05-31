@@ -6,7 +6,13 @@ const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Accept': 'application/rss+xml,application/xml;q=0.9,text/html;q=0.8,*/*;q=0.5',
   'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
   'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Upgrade-Insecure-Requests': '1',
 };
 
 function fetchUrl(targetUrl, redirectsLeft, timeoutMs) {
@@ -20,7 +26,12 @@ function fetchUrl(targetUrl, redirectsLeft, timeoutMs) {
       port: target.port || (target.protocol === 'https:' ? 443 : 80),
       path: target.pathname + target.search,
       method: 'GET',
-      headers: { ...HEADERS, 'Host': target.hostname },
+      headers: {
+        ...HEADERS,
+        'Host': target.hostname,
+        'Referer': `${target.protocol}//${target.hostname}/`,
+        'Origin': `${target.protocol}//${target.hostname}`,
+      },
     }, (upstream) => {
       const { statusCode, headers } = upstream;
       if ([301, 302, 307, 308].includes(statusCode) && headers.location && redirectsLeft > 0) {
