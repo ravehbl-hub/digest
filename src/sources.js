@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 11;
+export const SOURCES_VERSION = 12;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -10,11 +10,9 @@ export const DEFAULT_SOURCES = [
 
   // FINANCE — TheMarker
   { id: 'themarker',         name: 'TheMarker',               nameHe: 'דה מרקר',                 url: 'https://www.themarker.com/srv/tm-news',                                         category: 'finance', active: true },
-  { id: 'themarker-x',       name: 'TheMarker (X)',           nameHe: 'דה מרקר (X)',              url: 'https://nitter.net/themarker/rss',                                              category: 'finance', active: false },
 
   // FINANCE — Calcalist
   { id: 'calcalist-tg',      name: 'Calcalist (Telegram)',     nameHe: 'כלכליסט (טלגרם)',         url: 'https://t.me/s/calcalist',                                                     category: 'finance', active: true },
-  { id: 'calcalist-x',       name: 'Calcalist (X)',            nameHe: 'כלכליסט (X)',              url: 'https://nitter.net/calcalist/rss',                                              category: 'finance', active: true },
   { id: 'ecoilchannel',      name: 'Economy Channel',         nameHe: 'ערוץ הכלכלה',             url: 'https://www.mako.co.il/rss/31750a2610f26110VgnVCM1000005201000aRCRD.xml',       category: 'finance', active: true },
 
   // TECH
@@ -27,17 +25,16 @@ export const DEFAULT_SOURCES = [
   { id: 'internetisrael',    name: 'Internet Israel',         nameHe: 'אינטרנט ישראל',           url: 'https://internet-israel.com/feed/',                                             category: 'tech',    active: true },
 
   // SCIENCE
-  { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://t.me/s/hayadan1',                                                      category: 'science', active: true },
+  { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://www.hayadan.org.il/feed/',                                               category: 'science', active: true },
   { id: 'davidson',          name: 'Davidson Institute',      nameHe: 'מגזין מכון דוידסון',      url: 'https://davidson.org.il/?feed=rss2',                                            category: 'science', active: false },
 
   // AUTO
-  { id: 'auto',              name: 'Auto',                    nameHe: 'אוטו',                    url: 'https://www.auto.co.il/?feed=rss2',                                             category: 'auto',    active: true },
   { id: 'cartube',           name: 'CarTube',                 nameHe: 'קארטיוב',                 url: 'https://www.cartube.co.il/?format=feed&type=rss',                               category: 'auto',    active: true },
   { id: 'thecar',            name: 'The Car',                 nameHe: 'The Car',                 url: 'https://thecar.co.il/feed/',                                                    category: 'auto',    active: true },
   { id: 'wheel',             name: 'Wheel',                   nameHe: 'גלגל',                    url: 'https://t.me/s/wheel_news',                                                    category: 'auto',    active: true },
 
   // DEFENSE
-  { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://t.me/s/israeldefense_news',                                            category: 'defense', active: true },
+  { id: 'israeldefense',     name: 'Israel Defense',          nameHe: 'ישראל דיפנס',             url: 'https://www.israeldefense.co.il/rss.xml',                                      category: 'defense', active: true },
 ];
 
 export const CATEGORIES = {
