@@ -96,6 +96,13 @@ export default function App() {
   const isAnyLoading = Object.keys(loading).length > 0;
   const loadingCount = Object.keys(loading).length;
 
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div className="app" dir={isRtl ? 'rtl' : 'ltr'}>
       <header className="header">
@@ -211,6 +218,16 @@ export default function App() {
             setShowSources(false);
           }}
         />
+      )}
+
+      {showScrollTop && (
+        <button
+          className="scroll-top-btn"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Scroll to top"
+        >
+          ↑
+        </button>
       )}
     </div>
   );
