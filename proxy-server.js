@@ -67,6 +67,14 @@ createServer(async (req, res) => {
   if (req.method !== 'GET') { res.writeHead(405); res.end(); return; }
 
   const parsed = new URL(req.url, `http://localhost:${PORT}`);
+
+  // Health check
+  if (parsed.pathname === '/' || parsed.pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', service: 'Digest RSS Proxy' }));
+    return;
+  }
+
   if (parsed.pathname !== '/rss') { res.writeHead(404); res.end('Not found'); return; }
 
   const targetUrl = parsed.searchParams.get('url');
