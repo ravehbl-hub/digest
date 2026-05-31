@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 22;
+export const SOURCES_VERSION = 23;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -29,6 +29,7 @@ export const DEFAULT_SOURCES = [
   { id: 'davidson',          name: 'Davidson Institute',      nameHe: 'מגזין מכון דוידסון',      url: 'https://davidson.org.il/?feed=rss2',                                            category: 'science', active: false },
 
   // AUTO
+  { id: 'evmcoil',           name: 'EV Magazine',             nameHe: 'מגזין רכב חשמלי',         url: 'https://t.me/s/evmcoil',                                                       category: 'auto',    active: true },
   { id: 'cartube',           name: 'CarTube',                 nameHe: 'קארטיוב',                 url: 'https://www.cartube.co.il/?format=feed&type=rss',                               category: 'auto',    active: true },
   { id: 'thecar',            name: 'The Car',                 nameHe: 'The Car',                 url: 'https://thecar.co.il/feed/',                                                    category: 'auto',    active: true },
   { id: 'wheel',             name: 'Wheel',                   nameHe: 'גלגל',                    url: 'https://t.me/s/wheel_news',                                                    category: 'auto',    active: true },
