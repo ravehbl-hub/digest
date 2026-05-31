@@ -30,6 +30,7 @@ function formatDate(date, lang) {
 
 export default function NewsCard({ item, source, lang }) {
   const isRtl = lang === 'he';
+  const arrow = isRtl ? ' ←' : ' →';
 
   const [displayTitle, setDisplayTitle] = useState(item.title);
   const [displayDesc, setDisplayDesc] = useState(item.description);
@@ -69,7 +70,20 @@ export default function NewsCard({ item, source, lang }) {
         </div>
         <h3 className="card-title">{displayTitle}</h3>
         {displayDesc && <p className="card-desc">{displayDesc}</p>}
-        <span className="read-more">{t('readMore', lang)}{isRtl ? ' ←' : ' →'}</span>
+        <div className="card-links" onClick={e => e.stopPropagation()}>
+          <span className="read-more">{t('readMore', lang)}{arrow}</span>
+          {item.articleLink && item.articleLink !== item.link && (
+            <a
+              href={item.articleLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="article-link"
+              onClick={e => e.stopPropagation()}
+            >
+              {lang === 'he' ? `קישור לכתבה${arrow}` : `Article${arrow}`}
+            </a>
+          )}
+        </div>
       </div>
     </a>
   );

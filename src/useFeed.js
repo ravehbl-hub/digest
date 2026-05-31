@@ -48,8 +48,10 @@ function parseXML(xmlText) {
       title: doc.querySelector('channel > title')?.textContent?.trim() || '',
       items: rssItems.map(item => {
         const rawDesc = firstTag(item, 'description', 'content:encoded', 'content');
-        const link = item.querySelector('link')?.textContent?.trim()
+        const rawLink = item.querySelector('link')?.textContent?.trim()
           || item.querySelector('link')?.getAttribute('href') || '';
+        // Rewrite nitter links → x.com
+        const link = rawLink.replace(/^https?:\/\/nitter\.[^/]+\//, 'https://x.com/');
         return {
           id: firstTag(item, 'guid') || link,
           title: stripHtml(firstTag(item, 'title')),
@@ -120,7 +122,6 @@ function parseTelegram(html) {
     const permalink = dateLink?.href || (postId ? `https://t.me/${postId}` : '');
     const datetime = wrap.querySelector('time')?.getAttribute('datetime');
 
-    // Prefer article link from link_preview over Telegram permalink
     const previewLink = wrap.querySelector('a.tgme_widget_message_link_preview');
     const articleLink = previewLink?.href || permalink;
 
@@ -157,7 +158,8 @@ function parseTelegram(html) {
       id: permalink || postId,
       title,
       description,
-      link: articleLink,
+      link: permalink,        // card opens Telegram post
+      articleLink,            // "Read more" opens the actual article
       pubDate: parsePubDate(datetime),
       thumbnail,
     };
