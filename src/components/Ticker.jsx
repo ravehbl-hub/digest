@@ -5,24 +5,21 @@ function fmt(n, decimals = 2) {
 }
 
 function TickerItem({ item }) {
-  if (item.rate !== undefined) {
-    // Currency
-    return (
-      <span className="ticker-item">
-        <span className="ticker-label">{item.label}</span>
-        <span className="ticker-value">₪{fmt(item.rate)}</span>
-      </span>
-    );
-  }
-  // Stock
+  const isCurrency = item.symbol?.endsWith('=X');
   const up = item.pct >= 0;
   return (
     <span className="ticker-item">
       <span className="ticker-label">{item.label}</span>
-      <span className="ticker-value">{fmt(item.price, item.price > 1000 ? 0 : 2)}</span>
-      <span className={`ticker-pct ${up ? 'up' : 'down'}`}>
-        {up ? '▲' : '▼'}{Math.abs(item.pct).toFixed(2)}%
-      </span>
+      {isCurrency ? (
+        <span className="ticker-value">₪{fmt(item.price, 3)}</span>
+      ) : (
+        <>
+          <span className="ticker-value">{fmt(item.price, item.price > 1000 ? 0 : 2)}</span>
+          <span className={`ticker-pct ${up ? 'up' : 'down'}`}>
+            {up ? '▲' : '▼'}{Math.abs(item.pct).toFixed(2)}%
+          </span>
+        </>
+      )}
     </span>
   );
 }

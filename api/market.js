@@ -41,9 +41,9 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
   const symbols = [
-    // Currencies
-    () => getCurrency('USD', 'ILS', 'דולר'),
-    () => getCurrency('EUR', 'ILS', 'יורו'),
+    // Currencies via Yahoo Finance FX pairs
+    () => getStock('USDILS=X', 'דולר/ש"ח'),
+    () => getStock('EURILS=X', 'יורו/ש"ח'),
 
     // Israeli indices
     () => getStock('^TA35.TA',  'ת"א 35'),
