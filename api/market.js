@@ -81,6 +81,18 @@ export default async function handler(req, res) {
   ]);
 
   const data = [...stooqResults, ...taseResults].filter(Boolean);
+
+  // Debug: ?debug=1 shows all results including nulls
+  if (new URL(req.url, 'https://x').searchParams.get('debug') === '1') {
+    const all = [
+      ...STOOQ.map((s, i) => ({ sym: s.s, result: stooqResults[i] })),
+      ...TASE.map((s, i) => ({ sym: s.s, result: taseResults[i] })),
+    ];
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ all, count: data.length, ts: Date.now() }, null, 2));
+    return;
+  }
+
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ data, ts: Date.now() }));
 }
