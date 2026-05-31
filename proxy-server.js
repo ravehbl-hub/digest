@@ -68,14 +68,12 @@ createServer(async (req, res) => {
 
   const parsed = new URL(req.url, `http://localhost:${PORT}`);
 
-  // Health check
-  if (parsed.pathname === '/' || parsed.pathname === '/health') {
+  // Health check — any path except /rss
+  if (!parsed.pathname.startsWith('/rss')) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'Digest RSS Proxy' }));
+    res.end(JSON.stringify({ status: 'ok', service: 'Digest RSS Proxy', path: parsed.pathname }));
     return;
   }
-
-  if (parsed.pathname !== '/rss') { res.writeHead(404); res.end('Not found'); return; }
 
   const targetUrl = parsed.searchParams.get('url');
   if (!targetUrl) { res.writeHead(400); res.end('Missing url'); return; }

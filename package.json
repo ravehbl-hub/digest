@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "node proxy-server.js",
     "proxy": "node proxy-server.js",
     "build": "vite build",
     "lint": "eslint .",

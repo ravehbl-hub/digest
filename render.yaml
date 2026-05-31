@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: digest-proxy
+    runtime: node
+    buildCommand: echo "no build needed"
+    startCommand: node proxy-server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
