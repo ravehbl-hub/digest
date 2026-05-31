@@ -205,29 +205,14 @@ async function tryLocalProxy(feedUrl) {
   return parseXML(text);
 }
 
-// External proxy (proxy-server.js on Render.com) — runtime config via /api/config
-// Set PROXY_URL=https://your-render-proxy.onrender.com in Vercel dashboard (no rebuild needed)
-let _externalProxyUrl = null;
-
-async function getExternalProxyUrl() {
-  if (_externalProxyUrl !== null) return _externalProxyUrl;
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 4000);
-    const res = await fetch('/api/config', { signal: controller.signal });
-    clearTimeout(id);
-    const data = await res.json();
-    _externalProxyUrl = data.proxyUrl || '';
-  } catch {
-    _externalProxyUrl = '';
-  }
-  return _externalProxyUrl;
-}
+// External proxy (proxy-server.js on Render.com)
+// Fetched once at startup from /api/config — does NOT block individual source loads
+let _externalProxyUrl = '';
+fetch('/api/config').then(r => r.json()).then(d => { _externalProxyUrl = d.proxyUrl || ''; }).catch(() => {});
 
 async function tryExternalProxy(feedUrl) {
-  const proxyUrl = await getExternalProxyUrl();
-  if (!proxyUrl) throw new Error('No external proxy configured');
-  const res = await fetchWithTimeout(`${proxyUrl}/rss?url=${encodeURIComponent(feedUrl)}`);
+  if (!_externalProxyUrl) throw new Error('No external proxy');
+  const res = await fetchWithTimeout(`${_externalProxyUrl}/rss?url=${encodeURIComponent(feedUrl)}`);
   if (!res.ok) throw new Error(`external proxy ${res.status}`);
   const text = await res.text();
   if (!text.trim()) throw new Error('external proxy empty');
