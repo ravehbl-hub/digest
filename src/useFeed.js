@@ -195,13 +195,26 @@ function fetchWithTimeout(url, ms = 12000) {
 
 // --- Proxy strategies ---
 
+// Vercel serverless function / Vite dev middleware
 async function tryLocalProxy(feedUrl) {
   const res = await fetchWithTimeout(`/api/rss?url=${encodeURIComponent(feedUrl)}`);
   if (!res.ok) throw new Error(`local proxy ${res.status}`);
   const text = await res.text();
   if (!text.trim()) throw new Error('local proxy empty');
+  if (isTelegramUrl(feedUrl)) return parseTelegram(text);
+  return parseXML(text);
+}
 
-  // Telegram channel pages return HTML — use the Telegram parser
+// External proxy (proxy-server.js on Render.com) — non-cloud IPs, bypasses AWS blocks
+// Set VITE_PROXY_URL=https://your-proxy.onrender.com in Vercel environment variables
+const EXTERNAL_PROXY = import.meta.env?.VITE_PROXY_URL || '';
+
+async function tryExternalProxy(feedUrl) {
+  if (!EXTERNAL_PROXY) throw new Error('No external proxy');
+  const res = await fetchWithTimeout(`${EXTERNAL_PROXY}/rss?url=${encodeURIComponent(feedUrl)}`);
+  if (!res.ok) throw new Error(`external proxy ${res.status}`);
+  const text = await res.text();
+  if (!text.trim()) throw new Error('external proxy empty');
   if (isTelegramUrl(feedUrl)) return parseTelegram(text);
   return parseXML(text);
 }
@@ -248,7 +261,7 @@ async function fetchFeed(url) {
   const cached = cache.get(url);
   if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
 
-  for (const strategy of [tryLocalProxy, tryCorsproxy, tryAllOrigins, tryRss2Json]) {
+  for (const strategy of [tryLocalProxy, tryExternalProxy, tryCorsproxy, tryAllOrigins, tryRss2Json]) {
     try {
       const data = await strategy(url);
       cache.set(url, { ts: Date.now(), data });

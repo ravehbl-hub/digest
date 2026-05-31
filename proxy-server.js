@@ -1,62 +1,85 @@
 import { createServer } from 'http';
 import https from 'https';
 import http from 'http';
+import zlib from 'zlib';
 import { URL } from 'url';
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-createServer((req, res) => {
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'application/rss+xml,application/xml;q=0.9,text/html;q=0.8,*/*;q=0.5',
+  'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Upgrade-Insecure-Requests': '1',
+};
+
+function decompress(upstream) {
+  const enc = upstream.headers['content-encoding'] || '';
+  if (enc.includes('br')) return upstream.pipe(zlib.createBrotliDecompress());
+  if (enc.includes('gzip')) return upstream.pipe(zlib.createGunzip());
+  if (enc.includes('deflate')) return upstream.pipe(zlib.createInflate());
+  return upstream;
+}
+
+function fetchUrl(targetUrl, redirectsLeft) {
+  return new Promise((resolve, reject) => {
+    let target;
+    try { target = new URL(targetUrl); } catch (e) { return reject(e); }
+
+    const mod = target.protocol === 'https:' ? https : http;
+    const req = mod.request({
+      hostname: target.hostname,
+      port: target.port || (target.protocol === 'https:' ? 443 : 80),
+      path: target.pathname + target.search,
+      method: 'GET',
+      headers: {
+        ...HEADERS,
+        'Host': target.hostname,
+        'Referer': `${target.protocol}//${target.hostname}/`,
+        'Origin': `${target.protocol}//${target.hostname}`,
+      },
+    }, (upstream) => {
+      const { statusCode, headers } = upstream;
+      if ([301, 302, 307, 308].includes(statusCode) && headers.location && redirectsLeft > 0) {
+        upstream.resume();
+        fetchUrl(new URL(headers.location, targetUrl).href, redirectsLeft - 1).then(resolve).catch(reject);
+        return;
+      }
+      resolve({ statusCode, headers, stream: decompress(upstream) });
+    });
+
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
 
-  if (req.method !== 'GET') {
-    res.writeHead(405); res.end(); return;
-  }
+  if (req.method !== 'GET') { res.writeHead(405); res.end(); return; }
 
   const parsed = new URL(req.url, `http://localhost:${PORT}`);
-  if (parsed.pathname !== '/rss') {
-    res.writeHead(404); res.end('Not found'); return;
-  }
+  if (parsed.pathname !== '/rss') { res.writeHead(404); res.end('Not found'); return; }
 
   const targetUrl = parsed.searchParams.get('url');
-  if (!targetUrl) {
-    res.writeHead(400); res.end('Missing url param'); return;
-  }
+  if (!targetUrl) { res.writeHead(400); res.end('Missing url'); return; }
 
-  let target;
-  try { target = new URL(targetUrl); }
-  catch { res.writeHead(400); res.end('Invalid url'); return; }
-
-  const mod = target.protocol === 'https:' ? https : http;
-
-  const options = {
-    hostname: target.hostname,
-    port: target.port || (target.protocol === 'https:' ? 443 : 80),
-    path: target.pathname + target.search,
-    method: 'GET',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'application/rss+xml,application/xml;q=0.9,text/xml;q=0.8,*/*;q=0.5',
-      'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8',
-      'Cache-Control': 'no-cache',
-    },
-  };
-
-  const proxyReq = mod.request(options, (proxyRes) => {
-    const ct = proxyRes.headers['content-type'] || 'application/xml; charset=utf-8';
-    res.writeHead(proxyRes.statusCode, { 'Content-Type': ct });
-    proxyRes.pipe(res);
-  });
-
-  proxyReq.setTimeout(12000, () => {
-    proxyReq.destroy();
-    if (!res.headersSent) { res.writeHead(504); res.end('Timeout'); }
-  });
-
-  proxyReq.on('error', (e) => {
+  try {
+    const { statusCode, headers, stream } = await fetchUrl(targetUrl, 5);
+    const ct = (headers['content-type'] || 'application/xml; charset=utf-8')
+      .replace(/;\s*charset=[^;]*/i, '; charset=utf-8');
+    res.writeHead(statusCode, { 'Content-Type': ct });
+    stream.pipe(res);
+    stream.on('error', () => { if (!res.headersSent) res.end(); });
+  } catch (e) {
     if (!res.headersSent) { res.writeHead(502); res.end(e.message); }
-  });
-
-  proxyReq.end();
-
-}).listen(PORT, () => console.log(`RSS proxy on http://localhost:${PORT}`));
+  }
+}).listen(PORT, () => console.log(`RSS proxy on port ${PORT}`));
