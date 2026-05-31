@@ -24,23 +24,39 @@ function TickerItem({ item }) {
   );
 }
 
-const SEP = <span className="ticker-sep">•</span>;
-
 export default function Ticker() {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const load = () => {
     fetch('/api/market')
       .then(r => r.json())
-      .then(d => setItems(d.data || []))
-      .catch(() => {});
+      .then(d => { setItems(d.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
   };
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 60 * 60 * 1000); // refresh every 1h
+    const id = setInterval(load, 60 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Always render the bar — show loading dots while waiting
+  if (loading) {
+    return (
+      <div className="ticker-wrap">
+        <div className="ticker-track" style={{ animationDuration: '8s' }}>
+          <span className="ticker-content">
+            {[...Array(6)].map((_, i) => (
+              <span key={i} className="ticker-item">
+                <span className="ticker-label" style={{ opacity: 0.3 }}>{'████'.slice(0, 4 + (i % 3))}</span>
+              </span>
+            ))}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) return null;
 
