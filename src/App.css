@@ -219,11 +219,14 @@ input, select { font: inherit; }
   transition: background 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
-.news-card:hover {
-  background: var(--card-hover);
-  transform: translateY(-1px);
+.news-card:hover { background: var(--card-hover); }
+
+.card-title-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
-.news-card:active { transform: scale(0.99); }
+.card-title-link:hover .card-title { color: var(--accent); }
 
 .card-image {
   width: 100%;
@@ -301,14 +304,6 @@ input, select { font: inherit; }
   color: var(--accent);
 }
 
-.article-link {
-  font-size: 12px;
-  color: var(--text2);
-  text-decoration: none;
-  border-inline-start: 1px solid var(--border);
-  padding-inline-start: 12px;
-}
-.article-link:hover { color: var(--text); }
 
 /* ===== Error chip ===== */
 .error-chip {

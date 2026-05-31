@@ -32,6 +32,11 @@ export default function NewsCard({ item, source, lang }) {
   const isRtl = lang === 'he';
   const arrow = isRtl ? ' ←' : ' →';
 
+  // articleLink: article page (from Telegram link_preview)
+  // item.link:   Telegram post / X tweet / RSS article
+  const primaryLink = item.articleLink || item.link;
+  const sourceLink = item.link;
+
   const [displayTitle, setDisplayTitle] = useState(item.title);
   const [displayDesc, setDisplayDesc] = useState(item.description);
 
@@ -48,17 +53,11 @@ export default function NewsCard({ item, source, lang }) {
   }, [lang, item.title, item.description]);
 
   return (
-    <a
-      href={item.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="news-card"
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
+    <div className="news-card" dir={isRtl ? 'rtl' : 'ltr'}>
       {item.thumbnail && (
-        <div className="card-image">
+        <a href={primaryLink} target="_blank" rel="noopener noreferrer" className="card-image">
           <img src={item.thumbnail} alt="" loading="lazy" onError={e => { e.target.parentNode.style.display = 'none'; }} />
-        </div>
+        </a>
       )}
       <div className="card-body">
         <div className="card-meta">
@@ -68,23 +67,27 @@ export default function NewsCard({ item, source, lang }) {
           </span>
           <span className="time-ago">{timeAgo(item.pubDate, lang)}</span>
         </div>
-        <h3 className="card-title">{displayTitle}</h3>
+
+        {/* Title links to article (or primary link) */}
+        <a href={primaryLink} target="_blank" rel="noopener noreferrer" className="card-title-link">
+          <h3 className="card-title">{displayTitle}</h3>
+        </a>
+
         {displayDesc && <p className="card-desc">{displayDesc}</p>}
-        <div className="card-links" onClick={e => e.stopPropagation()}>
-          <span className="read-more">{t('readMore', lang)}{arrow}</span>
-          {item.articleLink && item.articleLink !== item.link && (
-            <a
-              href={item.articleLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="article-link"
-              onClick={e => e.stopPropagation()}
-            >
-              {lang === 'he' ? `קישור לכתבה${arrow}` : `Article${arrow}`}
+
+        <div className="card-links">
+          {/* "Read more" links to Telegram/X post when there's a separate article link */}
+          {item.articleLink && item.articleLink !== sourceLink ? (
+            <a href={sourceLink} target="_blank" rel="noopener noreferrer" className="read-more">
+              {lang === 'he' ? `פתח בטלגרם${arrow}` : `Open source${arrow}`}
+            </a>
+          ) : (
+            <a href={sourceLink} target="_blank" rel="noopener noreferrer" className="read-more">
+              {t('readMore', lang)}{arrow}
             </a>
           )}
         </div>
       </div>
-    </a>
+    </div>
   );
 }
