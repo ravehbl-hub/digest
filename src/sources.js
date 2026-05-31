@@ -1,4 +1,4 @@
-export const SOURCES_VERSION = 15;
+export const SOURCES_VERSION = 16;
 
 export const DEFAULT_SOURCES = [
   // NEWS
@@ -26,7 +26,7 @@ export const DEFAULT_SOURCES = [
 
   // SCIENCE
   { id: 'hidaan',            name: 'HaYadan',                 nameHe: 'הידען',                   url: 'https://www.hayadan.org.il/feed/',                                               category: 'science', active: true },
-  { id: 'davidson',          name: 'Davidson Institute',      nameHe: 'מגזין מכון דוידסון',      url: 'https://davidson.org.il/?feed=rss2',                                            category: 'science', active: false },
+  { id: 'davidson',          name: 'Davidson Institute',      nameHe: 'מגזין מכון דוידסון',      url: 'https://davidson.org.il/?feed=rss2',                                            category: 'science', active: true },
 
   // AUTO
   { id: 'cartube',           name: 'CarTube',                 nameHe: 'קארטיוב',                 url: 'https://www.cartube.co.il/?format=feed&type=rss',                               category: 'auto',    active: true },
