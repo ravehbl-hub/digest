@@ -135,6 +135,24 @@ export const DEFAULT_SOURCES = [
     active: true,
   },
 
+  {
+    id: "machonweizmanresearch",
+    name: "Machon Weizman",
+    nameHe: "מכון ויזמן מחקרים",
+    url: "https://heb.wis-wander.weizmann.ac.il/feeds/research/all",
+    category: "science",
+    active: true,
+  },
+
+  {
+    id: "machonweizmannews",
+    name: "Machon Weizman",
+    nameHe: "מכון ויזמן חדשות",
+    url: "https://heb.wis-wander.weizmann.ac.il/feeds/news",
+    category: "science",
+    active: true,
+  },
+
   // AUTO
   {
     id: "evmcoil",
