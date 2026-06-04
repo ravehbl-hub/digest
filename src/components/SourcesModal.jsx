@@ -2,30 +2,115 @@ import { useState } from 'react';
 import { t } from '../i18n';
 import { CATEGORIES } from '../sources';
 
+const SOURCE_TYPES = [
+  { id: 'rss',      icon: '📡', labelEn: 'RSS Feed',  labelHe: 'RSS' },
+  { id: 'telegram', icon: '✈️', labelEn: 'Telegram',  labelHe: 'טלגרם' },
+  { id: 'twitter',  icon: '𝕏',  labelEn: 'X / Twitter', labelHe: 'X / טוויטר' },
+];
+
+function detectType(url) {
+  if (!url) return 'rss';
+  if (url.includes('t.me/')) return 'telegram';
+  if (url.includes('nitter.')) return 'twitter';
+  return 'rss';
+}
+
+function buildUrl(type, handle) {
+  const h = handle.replace(/^@/, '').trim();
+  if (!h) return '';
+  if (type === 'telegram') return `https://t.me/s/${h}`;
+  if (type === 'twitter')  return `https://nitter.net/${h}/rss`;
+  return handle; // RSS: raw URL
+}
+
+function extractHandle(type, url) {
+  if (type === 'telegram') return url.replace('https://t.me/s/', '');
+  if (type === 'twitter')  return url.replace('https://nitter.net/', '').replace('/rss', '');
+  return url;
+}
+
 function SourceForm({ source, lang, onSave, onCancel }) {
+  const isRtl = lang === 'he';
+  const initialType = source ? detectType(source.url) : 'rss';
+  const [type, setType] = useState(initialType);
+  const [handle, setHandle] = useState(source ? extractHandle(initialType, source.url) : '');
   const [form, setForm] = useState(source || {
     id: '', name: '', nameHe: '', url: '', category: 'news', active: true,
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.name || !form.url) return;
-    const id = form.id || form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    onSave({ ...form, id });
+  const onTypeChange = (newType) => {
+    setType(newType);
+    setHandle('');
+    set('url', '');
   };
 
+  const onHandleChange = (val) => {
+    setHandle(val);
+    if (type !== 'rss') {
+      set('url', buildUrl(type, val));
+    } else {
+      set('url', val);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const url = type === 'rss' ? handle : buildUrl(type, handle);
+    if (!form.name || !url) return;
+    const id = form.id || form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    onSave({ ...form, url, id });
+  };
+
+  const placeholder = type === 'rss'
+    ? 'https://example.com/feed.xml'
+    : type === 'telegram'
+    ? isRtl ? 'שם הערוץ (ללא @)' : 'channel_name'
+    : isRtl ? 'שם המשתמש (ללא @)' : 'username';
+
+  const handleLabel = type === 'rss'
+    ? t('feedUrl', lang)
+    : type === 'telegram'
+    ? (isRtl ? 'שם ערוץ טלגרם' : 'Telegram channel')
+    : (isRtl ? 'שם משתמש X' : 'X username');
+
   return (
-    <form className="source-form" onSubmit={handleSubmit} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+    <form className="source-form" onSubmit={handleSubmit} dir={isRtl ? 'rtl' : 'ltr'}>
+
+      {/* Source type selector */}
+      <div className="source-type-picker">
+        {SOURCE_TYPES.map(st => (
+          <button
+            key={st.id}
+            type="button"
+            className={`source-type-btn ${type === st.id ? 'active' : ''}`}
+            onClick={() => onTypeChange(st.id)}
+          >
+            <span className="st-icon">{st.icon}</span>
+            <span>{isRtl ? st.labelHe : st.labelEn}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Handle / URL input */}
+      <label>{handleLabel}
+        <input
+          value={handle}
+          onChange={e => onHandleChange(e.target.value)}
+          placeholder={placeholder}
+          required
+        />
+        {type !== 'rss' && handle && (
+          <span className="url-preview">{buildUrl(type, handle)}</span>
+        )}
+      </label>
+
       <label>{t('sourceName', lang)}
         <input value={form.name} onChange={e => set('name', e.target.value)} required />
       </label>
       <label>{t('sourceNameHe', lang)}
         <input value={form.nameHe} onChange={e => set('nameHe', e.target.value)} />
-      </label>
-      <label>{t('feedUrl', lang)}
-        <input value={form.url} onChange={e => set('url', e.target.value)} type="url" required placeholder="https://..." />
       </label>
       <label>{t('category', lang)}
         <select value={form.category} onChange={e => set('category', e.target.value)}>
@@ -47,7 +132,7 @@ function SourceForm({ source, lang, onSave, onCancel }) {
 }
 
 export default function SourcesModal({ sources, lang, onClose, onUpdate }) {
-  const [editing, setEditing] = useState(null); // null = list, 'new' = add, source = edit
+  const [editing, setEditing] = useState(null);
   const isRtl = lang === 'he';
 
   const handleSave = (saved) => {
