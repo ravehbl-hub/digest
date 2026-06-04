@@ -138,7 +138,7 @@ export const DEFAULT_SOURCES = [
   {
     id: "machonweizmanresearch",
     name: "Machon Weizman",
-    nameHe: "מכון ויזמן מחקרים",
+    nameHe: "מכון ויצמן מחקרים",
     url: "https://heb.wis-wander.weizmann.ac.il/feeds/research/all",
     category: "science",
     active: true,
@@ -147,7 +147,7 @@ export const DEFAULT_SOURCES = [
   {
     id: "machonweizmannews",
     name: "Machon Weizman",
-    nameHe: "מכון ויזמן חדשות",
+    nameHe: "מכון ויצמן חדשות",
     url: "https://heb.wis-wander.weizmann.ac.il/feeds/news",
     category: "science",
     active: true,
@@ -188,14 +188,14 @@ export const DEFAULT_SOURCES = [
   },
 
   // DEFENSE
-  {
-    id: "israeldefense",
-    name: "Israel Defense",
-    nameHe: "ישראל דיפנס",
-    url: "https://nitter.net/_israeldefense/rss",
-    category: "defense",
-    active: true,
-  },
+  // {
+  //   id: "israeldefense",
+  //   name: "Israel Defense",
+  //   nameHe: "ישראל דיפנס",
+  //   url: "https://nitter.net/_israeldefense/rss",
+  //   category: "defense",
+  //   active: true,
+  // },
   {
     id: "newtechmilitary",
     name: "New Tech",
