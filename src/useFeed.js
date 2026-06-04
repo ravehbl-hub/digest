@@ -22,9 +22,18 @@ function extractImage(html) {
 }
 
 function parsePubDate(str) {
-  if (!str) return null;
-  const d = new Date(str.trim());
-  return isNaN(d.getTime()) ? null : d;
+  if (!str?.trim()) return null;
+  const s = str.trim();
+  // Try native parse (handles RFC 2822, ISO 8601, CDATA-wrapped)
+  let d = new Date(s);
+  if (!isNaN(d.getTime())) return d;
+  // MySQL/space-separated: "2024-06-04 11:05:00"
+  d = new Date(s.replace(' ', 'T'));
+  if (!isNaN(d.getTime())) return d;
+  // Date-only: "2024-06-04" → midnight UTC
+  d = new Date(s.substring(0, 10));
+  if (!isNaN(d.getTime())) return d;
+  return null;
 }
 
 function firstTag(el, ...names) {

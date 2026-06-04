@@ -62,10 +62,14 @@ export default function NewsCard({ item, source, lang }) {
       <div className="card-body">
         <div className="card-meta">
           <span className="source-badge">{isRtl ? source.nameHe : source.name}</span>
-          <span className="card-time">
-            {formatDate(item.pubDate, lang)} · {formatTime(item.pubDate, lang)}
-          </span>
-          <span className="time-ago">{timeAgo(item.pubDate, lang)}</span>
+          {item.pubDate && (
+            <span className="card-time">
+              {formatDate(item.pubDate, lang)} · {formatTime(item.pubDate, lang)}
+            </span>
+          )}
+          {item.pubDate && (
+            <span className="time-ago">{timeAgo(item.pubDate, lang)}</span>
+          )}
         </div>
 
         {/* Title links to article (or primary link) */}
