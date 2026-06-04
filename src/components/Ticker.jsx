@@ -10,16 +10,12 @@ function TickerItem({ item }) {
   return (
     <span className="ticker-item">
       <span className="ticker-label">{item.label}</span>
-      {isCurrency ? (
-        <span className="ticker-value">₪{fmt(item.price, 3)}</span>
-      ) : (
-        <>
-          <span className="ticker-value">{fmt(item.price, item.price > 1000 ? 0 : 2)}</span>
-          <span className={`ticker-pct ${up ? 'up' : 'down'}`}>
-            {up ? '▲' : '▼'}{Math.abs(item.pct).toFixed(2)}%
-          </span>
-        </>
-      )}
+      <span className="ticker-value">
+        {isCurrency ? `₪${fmt(item.price, 3)}` : fmt(item.price, item.price > 1000 ? 0 : 2)}
+      </span>
+      <span className={`ticker-pct ${up ? 'up' : 'down'}`}>
+        {up ? '▲' : '▼'}{Math.abs(item.pct).toFixed(2)}%
+      </span>
     </span>
   );
 }
