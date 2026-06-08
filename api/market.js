@@ -1,8 +1,11 @@
 import https from 'https';
 
+const CURRENCIES = [
+  { s: 'USDILS=X', label: 'דולר/ש"ח', currency: true },
+  { s: 'EURILS=X', label: 'יורו/ש"ח', currency: true },
+];
+
 const STOOQ = [
-  { s: 'usdils',   label: 'דולר/ש"ח', currency: true },
-  { s: 'eurils',   label: 'יורו/ש"ח', currency: true },
   { s: '^spx',     label: 'S&P 500' },
   { s: '^ndq',     label: 'נאסד"ק' },
   { s: 'msft.us',  label: 'Microsoft' },
@@ -25,10 +28,11 @@ const TASE = [
   { s: 'AZRG.TA',   label: 'עזריאלי' },
   { s: 'GVYM.TA',   label: 'גב ים' },
   { s: 'AMOT.TA',   label: 'אמות' },
+  { s: 'TDHR.TA',   label: 'קבוצת תדהר' },
   { s: 'ESLT.TA',   label: 'אלביט מערכות' },
 ];
 
-const ALL = [...STOOQ, ...TASE];
+const ALL = [...CURRENCIES, ...STOOQ, ...TASE];
 
 function get(url, ms = 6000) {
   return new Promise((resolve, reject) => {
@@ -60,26 +64,27 @@ async function stooqQuote({ s, label, currency }) {
   } catch (e) { return null; }
 }
 
-async function taseQuote({ s, label }) {
+async function yahooQuote({ s, label, currency }) {
   try {
     const body = await get(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=2d`);
     const meta = JSON.parse(body)?.chart?.result?.[0]?.meta;
     if (!meta?.regularMarketPrice) return null;
     const price = meta.regularMarketPrice;
     const prev = meta.chartPreviousClose || price;
-    return { label, price, pct: ((price - prev) / prev) * 100, currency: false };
+    return { label, price, pct: ((price - prev) / prev) * 100, currency: !!currency };
   } catch (e) { return null; }
 }
 
 export default async function handler(req, res) {
   const isDebug = new URL(req.url, 'https://x').searchParams.get('debug') === '1';
 
-  const [stooqResults, taseResults] = await Promise.all([
+  const [currencyResults, stooqResults, taseResults] = await Promise.all([
+    Promise.all(CURRENCIES.map(yahooQuote)),
     Promise.all(STOOQ.map(stooqQuote)),
-    Promise.all(TASE.map(taseQuote)),
+    Promise.all(TASE.map(yahooQuote)),
   ]);
 
-  const all = [...stooqResults, ...taseResults];
+  const all = [...currencyResults, ...stooqResults, ...taseResults];
   const data = all.filter(Boolean);
 
   const headers = {
